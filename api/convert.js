@@ -1,12 +1,9 @@
 function convert(q) {
-  // If the user wrote nothing, tell them
   if (!q.trim()) {
-    console.log("You didn’t write anything!");
+    console.log(JSON.stringify("You didn’t write anything!"));
     return;
   }
-
-  // Otherwise, repeat exactly what they said
-  console.log(q);
+  console.log(JSON.stringify(q));
 }
 
 convert(q);
