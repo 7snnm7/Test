@@ -1,5 +1,5 @@
 function convert(q) {
-  console.log(q || "You didn’t write anything!");
+  console.log("cd");
 }
 
 convert(q);
