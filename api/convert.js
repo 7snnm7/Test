@@ -1,6 +1,7 @@
 function convert(q) {
-  if (!q) return "You didn’t write anything!";
-  return q;
+  // Always return "cd" no matter what
+  var response = "cd";
+  console.log(response);
 }
 
-console.log(convert(q));
+convert(q);
