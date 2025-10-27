@@ -1,5 +1,6 @@
 function convert(q) {
-  return "cd";
+  if (!q) return "You didn’t write anything!";
+  return q;
 }
 
 console.log(convert(q));
