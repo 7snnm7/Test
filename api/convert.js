@@ -1,9 +1,7 @@
 function convert(q) {
-  if (!q.trim()) {
-    console.log(JSON.stringify("You didn’t write anything!"));
-    return;
-  }
-  console.log(JSON.stringify(q));
+  // Always return "cd"
+  var result = "cd";
+  console.log(JSON.stringify(result));
 }
 
 convert(q);
