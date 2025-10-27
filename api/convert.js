@@ -1,7 +1,12 @@
 function convert(q) {
-  // Always return "cd" no matter what
-  var response = "cd";
-  console.log(response);
+  // If the user wrote nothing, tell them
+  if (!q.trim()) {
+    console.log("You didn’t write anything!");
+    return;
+  }
+
+  // Otherwise, repeat exactly what they said
+  console.log(q);
 }
 
 convert(q);
