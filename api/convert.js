@@ -1,22 +1,24 @@
-async function convert(q) {
-  const key = "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"; // 👈 Paste your API key here (replace xx only)
-  const url = "https://api.openai.com/v1/chat/completions";
-  const data = {
-    model: "gpt-4o-mini",
-    messages: [{ role: "user", content: "اعطني موضوع نقاش عشوائي باللغة العربية" }]
+function convert(q) {
+  const mapping = {
+    q: "ض", w: "ص", e: "ث", r: "ق", t: "ف", y: "غ", u: "ع", i: "ه", o: "خ", p: "ح",
+    "[": "ج", "]": "د", a: "ش", s: "س", d: "ي", f: "ب", g: "ل", h: "ا", j: "ت",
+    k: "ن", l: "م", ";": "ك", "'": "ط", z: "ئ", x: "ء", c: "ؤ", v: "ر", b: "لا",
+    n: "ى", m: "ة", ",": "و", ".": "ز", "/": "ظ"
   };
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${key}`
-    },
-    body: JSON.stringify(data)
-  });
+  const hasArabic = /[\u0600-\u06FF]/.test(q);
 
-  const result = await response.json();
-  console.log(result.choices?.[0]?.message?.content || "حدث خطأ في توليد الموضوع.");
+  if (hasArabic) {
+    return "Input should be in English, so I’ll shoutout my creator, check out twitch.tv/HassanNM7 :D";
+  }
+
+  const converted = q
+    .split("")
+    .map((char) => mapping[char.toLowerCase()] || char)
+    .join("");
+
+  return converted;
 }
 
-convert(q);
+var result = convert(q);
+result;
