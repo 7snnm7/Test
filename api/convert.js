@@ -1,24 +1,22 @@
 function convert(q) {
-  const mapping = {
-    q: "ض", w: "ص", e: "ث", r: "ق", t: "ف", y: "غ", u: "ع", i: "ه", o: "خ", p: "ح",
-    "[": "ج", "]": "د", a: "ش", s: "س", d: "ي", f: "ب", g: "ل", h: "ا", j: "ت",
-    k: "ن", l: "م", ";": "ك", "'": "ط", z: "ئ", x: "ء", c: "ؤ", v: "ر", b: "لا",
-    n: "ى", m: "ة", ",": "و", ".": "ز", "/": "ظ"
-  };
+  if (!q) return 'Input should be in this state “!c OX OY OZ” or “!c NX NY NZ” check out my creator twitch.tv/hassannm7';
+  
+  const parts = q.trim().split(/\s+/).filter(Boolean);
+  const isOver = parts[0].toLowerCase() === 'o';
+  const nums = parts.filter(x => !isNaN(x)).map(Number);
 
-  const hasArabic = /[\u0600-\u06FF]/.test(q);
+  if (nums.length < 2 || nums.length > 3)
+    return 'Input should be in this state “!c OX OY OZ” or “!c o NX NY NZ” check out my creator twitch.tv/hassannm7';
 
-  if (hasArabic) {
-    return "Input should be in English, so I’ll shoutout my creator, check out twitch.tv/HassanNM7 :D";
+  if (isOver) {
+    const x = Math.round(nums[0] * 8);
+    const z = Math.round(nums[nums.length - 1] * 8);
+    return `Overworld Side Coordinates Are: (${x}, Y, ${z})`;
+  } else {
+    const x = Math.round(nums[0] / 8);
+    const z = Math.round(nums[nums.length - 1] / 8);
+    return `Nether Side Coordinates Are: (${x}, Y, ${z})`;
   }
-
-  const converted = q
-    .split("")
-    .map((char) => mapping[char.toLowerCase()] || char)
-    .join("");
-
-  return converted;
 }
 
-var result = convert(q);
-result;
+convert(q);
