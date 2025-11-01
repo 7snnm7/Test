@@ -1,133 +1,130 @@
-// The command input is passed to this script as the variable 'q'
-const errorMsg = 'Wrong input. Input should be in this state: !zr Zombie villager? yes/no (x) ◆ Baby? yes/no (x) ◆ Jockey? yes/no (x) ◆ Armor? yes/no (x) ◆ Armor pieces (if yes) 1/2/3/4 (x) ◆ Armor pieces enchanted (if yes) 1/2/3/4 (x) ◆ Armor type (if yes) L/co/ch/i/g/d (x) ◆ Loot? sword/shovel/can pick up/none (x) ◆ Enchanted weapon? (if yes) yes/no (x) ◆ Hand? (if yes) R/L (x) ◆ Halloween pumpkin? (if yes) carved/lantern (x) Check out my creator twitch.tv/hassannm7';
+// convert.js
+// Nightbot will set `q` to the string passed after the command.
+// This script expects the user to put each answer inside parentheses in order.
+// Example input format (user sends after command):
+// !zr Zombie villager? yes/no (yes) ◆ Baby? yes/no (yes) ◆ Jockey? yes/no (yes) ◆ Armor? yes/no (yes) ◆ Armor pieces (if yes) 1/2/3/4 (4) ◆ Armor pieces enchanted (if yes) 0/1/2/3/4 (0) ◆ Armor type (if yes) L/co/ch/i/g/d (d) ◆ Loot? sword/shovel/can pick up/none (sword) ◆ Enchanted weapon? (if yes) yes/no (no) ◆ Hand? (if yes) R/L (l) ◆ Halloween pumpkin? (if yes) carved/lantern (x)
 
-// 1. Check for empty input. Return an empty string to ignore the command.
-if (!q || q.trim() === '') {
-    return ''; 
-}
+try {
+  // read q variable (Nightbot sets this)
+  if (typeof q === 'undefined') q = '';
+  // find all parenthetical values in the input, in order
+  var parens = (q.match(/\(([^)]*)\)/g) || []).map(s => s.slice(1,-1).trim().toLowerCase());
 
-const input = q.toLowerCase().replace(/[\u200b-\u200f\u2028-\u202f\u2060-\u2064\u206a-\u206f]/g, '').trim();
-const parts = input.split(' ◆ ');
+  var expected = 11;
+  if (parens.length < expected) {
+    throw 'bad';
+  }
+  var [
+    zombieVillager, baby, jockey, armor,
+    armorPiecesStr, enchantedPiecesStr, armorType,
+    loot, enchantedWeapon, hand, pumpkin
+  ] = parens.slice(0,expected);
 
-// --- Input Validation ---
-if (parts.length !== 11) {
-    return errorMsg;
-}
+  // validate simple values
+  const yesno = v => v === 'yes' || v === 'no' || v === 'x' || v === 'n' || v === 'y';
+  if (![zombieVillager,baby,jockey,armor,enchantedWeapon].every(v => yesno(v))) throw 'bad';
 
-// Function to extract the answer from the 'Question? answer (x)' string
-const extractAnswer = (part, expectedPrefix) => {
-    // Escape special regex characters like '?' and '('
-    const regex = new RegExp(`^${expectedPrefix.replace(/[?()]/g, '\\$&')}\\s*([a-z0-9\\s/]+)\\s*\\(x\\)$`);
-    const match = part.match(regex);
-    if (match) {
-        return match[1].trim().toLowerCase();
+  // helpers & probabilities (as decimals)
+  var prob = 1.0;
+  // base spawn chance of a zombie among natural spawns
+  prob *= 0.20;
+
+  // zombie villager
+  prob *= (zombieVillager === 'yes') ? 0.05 : 0.95;
+
+  // baby
+  prob *= (baby === 'yes') ? 0.05 : 0.95;
+
+  // jockey
+  prob *= (jockey === 'yes') ? 0.05 : 0.95;
+
+  // armor
+  prob *= (armor === 'yes') ? 0.15 : 0.85;
+
+  // armor pieces mapping (conditional on armor yes)
+  var piecesMap = { '1':1.0, '2':0.9, '3':0.81, '4':0.729 };
+  var m = parseInt(armorPiecesStr,10);
+  if (armor === 'yes') {
+    if (!piecesMap.hasOwnProperty(String(m))) throw 'bad';
+    prob *= piecesMap[String(m)];
+    // enchanted pieces: treat as binomial exact-probability: P(exactly k enchanted among m) = C(m,k)/2^m
+    var k = parseInt(enchantedPiecesStr,10);
+    if (isNaN(k) || k < 0 || k > m) throw 'bad';
+    // compute C(m,k)
+    function comb(n,r){
+      if (r<0 || r>n) return 0;
+      r = Math.min(r, n-r);
+      var num = 1, den = 1;
+      for (var i=0;i<r;i++){ num *= (n-i); den *= (i+1); }
+      return num/den;
     }
-    return null; // Return null if the format or prefix is wrong
-};
+    var pExactK = (m===0) ? (k===0?1:0) : (comb(m,k) * Math.pow(0.5, m));
+    prob *= pExactK;
+    // armor type
+    var typeMap = { 'l':0.236, 'co':0.3223, 'ch':0.0973, 'g':0.3329, 'i':0.011, 'd':0.0004 };
+    if (!typeMap.hasOwnProperty(armorType)) throw 'bad';
+    prob *= typeMap[armorType];
+  } else {
+    // if no armor, ensure the pieces/enchanted/type are 'x' or input ignored
+  }
 
-// --- Variable Mapping and Calculation ---
-let prob = 0.20; // Base: Zombie spawning 20%
-
-const zombieVillager = extractAnswer(parts[0], 'zombie villager?');
-const baby = extractAnswer(parts[1], 'baby?');
-const jockey = extractAnswer(parts[2], 'jockey?');
-const armor = extractAnswer(parts[3], 'armor?');
-const armorPieces = extractAnswer(parts[4], 'armor pieces (if yes)');
-const armorEnchanted = extractAnswer(parts[5], 'armor pieces enchanted (if yes)');
-const armorType = extractAnswer(parts[6], 'armor type (if yes)');
-const loot = extractAnswer(parts[7], 'loot?');
-const enchantedWeapon = extractAnswer(parts[8], 'enchanted weapon? (if yes)');
-const hand = extractAnswer(parts[9], 'hand? (if yes)');
-const pumpkin = extractAnswer(parts[10], 'halloween pumpkin? (if yes)');
-
-// Check if any extraction failed (meaning a part was malformed)
-if (!zombieVillager || !baby || !jockey || !armor || !loot || !pumpkin || 
-    (armor === 'yes' && (!armorPieces || !armorEnchanted || !armorType)) ||
-    ((loot === 'sword' || loot === 'shovel') && !enchantedWeapon) ||
-    ((loot === 'sword' || loot === 'shovel' || loot === 'can pick up') && !hand)) 
-{
-    return errorMsg;
-}
-
-
-// 1. Zombie Villager
-prob *= (zombieVillager === 'yes') ? 0.05 : 0.95; 
-// 2. Baby
-prob *= (baby === 'yes') ? 0.05 : 0.95; 
-// 3. Jockey
-prob *= (jockey === 'yes') ? 0.05 : 0.95; 
-
-// 4. Armor
-if (armor === 'yes') {
-    prob *= 0.15; // Armor 15%
-    
-    // 5. Armor Pieces
-    switch (armorPieces) {
-        case '1': prob *= 1.0; break;
-        case '2': prob *= 0.90; break;
-        case '3': prob *= 0.81; break;
-        case '4': prob *= 0.729; break;
-        default: return errorMsg; 
-    }
-    
-    // 6. Armor Enchanted
-    const pieces = parseInt(armorEnchanted);
-    if (!isNaN(pieces) && pieces >= 1 && pieces <= 4) {
-        prob *= Math.pow(0.50, pieces);
-    } else {
-        return errorMsg; 
-    }
-    
-    // 7. Armor Type
-    switch (armorType) {
-        case 'l': prob *= 0.236; break;
-        case 'co': prob *= 0.3223; break;
-        case 'ch': prob *= 0.0973; break;
-        case 'g': prob *= 0.3329; break;
-        case 'i': prob *= 0.011; break;
-        case 'd': prob *= 0.0004; break;
-        default: return errorMsg; 
-    }
-} else {
-    prob *= 0.85; // No Armor
-}
-
-// 8. Loot
-if (loot === 'sword' || loot === 'shovel') {
-    prob *= 0.05; // Weapon 5%
-    prob *= (loot === 'sword') ? (1/3) : (2/3); // Sword 1/3, Shovel 2/3
-    // 9. Enchanted Weapon
+  // Loot / weapon handling
+  // If loot is 'sword' or 'shovel' -> treat as weapon present (5% of zombies)
+  // If loot == 'can pick up' -> use 55% (special case)
+  // If loot == 'none' -> take remaining probability (0.40)
+  loot = (loot || 'none');
+  if (loot === 'sword' || loot === 'shovel') {
+    prob *= 0.05;
+    // weapon type split: sword 1/3, shovel 2/3
+    prob *= (loot === 'sword') ? (1/3) : (2/3);
+    // enchanted weapon
     prob *= (enchantedWeapon === 'yes') ? 0.25 : 0.75;
-    
-    // 10. Hand (only if weapon or can pick up)
-    if (hand === 'l') { prob *= 0.11; } else if (hand === 'r') { prob *= 0.89; }
-    
-} else if (loot === 'can pick up') {
-    prob *= 0.55; // Can pick up item 55%
-    // 10. Hand (only if weapon or can pick up)
-    if (hand === 'l') { prob *= 0.11; } else if (hand === 'r') { prob *= 0.89; }
+  } else if (loot === 'can pick up') {
+    prob *= 0.55;
+    // enchantedWeapon and hand may still apply to 'can pick up' case:
+    // enchantedWeapon doesn't make sense here; ignore enchantedWeapon
+  } else if (loot === 'none') {
+    prob *= 0.40; // complement of 0.05 and 0.55 per your breakdown
+  } else {
+    throw 'bad';
+  }
 
-} else if (loot === 'none') {
-    // No operation needed for loot === 'none'
-} else {
-    return errorMsg;
+  // Hand: "If has weapon or can pick up loot in left hand 11%"
+  // Interpret: probability to have item in left hand is 11% if item present; else complement 89%.
+  var handLower = (hand || 'r');
+  if (handLower !== 'l' && handLower !== 'r' && handLower !== 'x') throw 'bad';
+  var itemPresent = (loot === 'sword' || loot === 'shovel' || loot === 'can pick up');
+  if (itemPresent) {
+    prob *= (handLower === 'l') ? 0.11 : 0.89;
+  } else {
+    // no held item — use complement (assume 1)
+    prob *= 1.0;
+  }
+
+  // pumpkin: carved 22.5% or lantern 2.5% ; if x/none assume neither: 1 - (0.225+0.025) = 0.75
+  if (pumpkin === 'carved') prob *= 0.225;
+  else if (pumpkin === 'lantern') prob *= 0.025;
+  else if (pumpkin === 'x' || pumpkin === 'none') prob *= 0.75;
+  else throw 'bad';
+
+  // Final probability for a *naturally spawned* mob being this exact zombie
+  if (prob <= 0) {
+    throw 'bad';
+  }
+  var pct = prob * 100;
+  // produce 1/x form
+  var oneOver = 1 / prob;
+  // choose formatting: if extremely large, show scientific for 1/x
+  var oneOverStr = (oneOver > 1e12) ? oneOver.toExponential(3) : Math.round(oneOver).toLocaleString('en-US');
+  // format percent with reasonable digits
+  var pctStr = (pct < 0.000001) ? pct.toExponential(3) + '%' : pct.toFixed(10).replace(/0+$/,'').replace(/\.$/,'') + '%';
+
+  var out = `Your naturally spawned zombie rarity in max local difficulty is 1/${oneOverStr} or ${pctStr}`;
+  // include creator shoutout
+  out += ' — Check out my creator twitch.tv/hassannm7';
+  // plain text result
+  out;
+} catch(e) {
+  // reply with the required "Wrong input" message exactly as requested
+  "Wrong input. Input should be in this state “ !zr Zombie villager? yes/no (x) ◆ Baby? yes/no (x) ◆ Jockey? yes/no (x) ◆ Armor? yes/no (x) ◆ Armor pieces (if yes) 1/2/3/4 (x) ◆ Armor pieces enchanted (if yes) 0/1/2/3/4 (x) ◆ Armor type (if yes) L/co/ch/i/g/d (x) ◆ Loot? sword/shovel/can pick up/none (x) ◆ Enchanted weapon? (if yes) yes/no (x) ◆ Hand? (if yes) R/L (x) ◆ Halloween pumpkin? (if yes) carved/lantern (x) “ if no ignore the question. Check out my creator twitch.tv/hassannm7";
 }
-
-// 11. Halloween Pumpkin
-if (pumpkin === 'carved') { prob *= 0.225; } 
-else if (pumpkin === 'lantern') { prob *= 0.025; } 
-else { prob *= 0.75; } 
-
-// --- Final Formatting ---
-let percent = (prob * 100).toFixed(6); 
-let result = '';
-
-if (prob * 100 < 0.0001) { 
-    result = 'less than 0.0001'; 
-} else {
-    // Trim trailing zeros and limit to 4 decimal places
-    result = parseFloat(percent).toFixed(4).replace(/(\.0+)?0$/, '');
-}
-
-// Final output string
-`Your naturally spawned zombie in max local difficulty is ${result}%`
