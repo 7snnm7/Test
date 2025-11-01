@@ -1,40 +1,40 @@
 function convert(q) {
-  if (!q)
-    return '❌ Wrong format. Use: !ml DD/MM/YYYY HH:MM:SS AM/PM (Example: !ml 17/7/2025 04:50:54 PM)';
+  if (!q || q.trim().split(/\s+/).length === 1)
+    return "check out my creator twitch.tv/HassanNM7";
 
-  const parts = q.trim().split(/\s+/);
-  if (parts.length !== 3)
-    return '❌ Wrong format. Use: !ml DD/MM/YYYY HH:MM:SS AM/PM (Example: !ml 17/7/2025 04:50:54 PM)';
+  // Arabic → English mapping
+  const mapping = {
+    "ا": "a", "ب": "b", "ت": "t", "ث": "th", "ج": "j", "ح": "h", "خ": "kh",
+    "د": "d", "ذ": "th", "ر": "r", "ز": "z", "س": "s", "ش": "sh", "ص": "s",
+    "ض": "d", "ط": "t", "ظ": "z", "ع": "a", "غ": "gh", "ف": "f", "ق": "q",
+    "ك": "k", "ل": "l", "م": "m", "ن": "n", "ه": "h", "و": "w", "ي": "y",
+    "ء": "'", "ى": "a", "ة": "h", "ؤ": "u", "ئ": "e"
+  };
 
-  const [dateStr, timeStr, ampmRaw] = parts;
-  const [day, month, year] = dateStr.split('/').map(Number);
-  const ampm = ampmRaw.toUpperCase();
+  const hasArabic = /[\u0600-\u06FF]/.test(q);
+  if (!hasArabic) return "check out my creator twitch.tv/HassanNM7";
 
-  if (
-    !day ||
-    !month ||
-    !year ||
-    !timeStr.match(/^\d{1,2}:\d{2}:\d{2}$/) ||
-    (ampm !== 'AM' && ampm !== 'PM')
-  )
-    return '❌ Wrong format. Use: !ml DD/MM/YYYY HH:MM:SS AM/PM (Example: !ml 17/7/2025 04:50:54 PM)';
+  const converted = q
+    .split("")
+    .map(ch => mapping[ch] || ch)
+    .join("");
 
-  let [hh, mm, ss] = timeStr.split(':').map(Number);
+  // Special direct translations for known words
+  const directMap = {
+    "اه": "Hi",
+    "سلام": "Hello",
+    "هلا": "Hey",
+    "باي": "Bye",
+    "تمام": "Good",
+    "شكرا": "Thanks",
+    "احبك": "Love you",
+    "شلونك": "How are you?",
+    "وينك": "Where are you?",
+    "ليش": "Why?",
+    "تصبح": "Good night"
+  };
 
-  // Convert AM/PM to 24-hour
-  if (ampm === 'PM' && hh < 12) hh += 12;
-  if (ampm === 'AM' && hh === 12) hh = 0;
-
-  // Add +5 hours for your region
-  hh += 5;
-  if (hh >= 24) {
-    hh -= 24;
-    day += 1; // Move to next day if over midnight
-  }
-
-  const formatted = `${month} ${day} ${year} ${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
-
-  return `LIVE started ${dateStr} ${timeStr} ${ampm} ◆$(eval a=new Date('${formatted}');t=Math.floor((Date.now()-a)/1000);d=Math.floor(t/86400);h=Math.floor(t%86400/3600);m=Math.floor(t%3600/60);s=Math.floor(t%60);d+'D '+h+'h '+m+'m '+s+'s') ◆ Day:$(eval Math.floor((Date.now()-new Date('${month} ${day} ${year} 17:00:00'))/86400000+2))`;
+  return directMap[q.trim()] || converted;
 }
 
 convert(q);
