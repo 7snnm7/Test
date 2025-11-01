@@ -1,40 +1,24 @@
 function convert(q) {
-  if (!q || q.trim().split(/\s+/).length === 1)
-    return "check out my creator twitch.tv/HassanNM7";
-
-  // Arabic → English mapping
   const mapping = {
-    "ا": "a", "ب": "b", "ت": "t", "ث": "th", "ج": "j", "ح": "h", "خ": "kh",
-    "د": "d", "ذ": "th", "ر": "r", "ز": "z", "س": "s", "ش": "sh", "ص": "s",
-    "ض": "d", "ط": "t", "ظ": "z", "ع": "a", "غ": "gh", "ف": "f", "ق": "q",
-    "ك": "k", "ل": "l", "م": "m", "ن": "n", "ه": "h", "و": "w", "ي": "y",
-    "ء": "'", "ى": "a", "ة": "h", "ؤ": "u", "ئ": "e"
+    q: "ض", w: "ص", e: "ث", r: "ق", t: "ف", y: "غ", u: "ع", i: "ه", o: "خ", p: "ح",
+    "[": "ج", "]": "د", a: "ش", s: "س", d: "ي", f: "ب", g: "ل", h: "ا", j: "ت",
+    k: "ن", l: "م", ";": "ك", "'": "ط", z: "ئ", x: "ء", c: "ؤ", v: "ر", b: "لا",
+    n: "ى", m: "ة", ",": "و", ".": "ز", "/": "ظ"
   };
 
   const hasArabic = /[\u0600-\u06FF]/.test(q);
-  if (!hasArabic) return "check out my creator twitch.tv/HassanNM7";
+
+  if (hasArabic) {
+    return "Input should be in English, so I’ll shoutout my creator, check out twitch.tv/HassanNM7 :D";
+  }
 
   const converted = q
     .split("")
-    .map(ch => mapping[ch] || ch)
+    .map((char) => mapping[char.toLowerCase()] || char)
     .join("");
 
-  // Special direct translations for known words
-  const directMap = {
-    "اه": "Hi",
-    "سلام": "Hello",
-    "هلا": "Hey",
-    "باي": "Bye",
-    "تمام": "Good",
-    "شكرا": "Thanks",
-    "احبك": "Love you",
-    "شلونك": "How are you?",
-    "وينك": "Where are you?",
-    "ليش": "Why?",
-    "تصبح": "Good night"
-  };
-
-  return directMap[q.trim()] || converted;
+  return converted;
 }
 
-convert(q);
+var result = convert(q);
+result;
