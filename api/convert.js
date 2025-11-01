@@ -6,7 +6,7 @@ function rarityCalc(q) {
     return m ? m[1].trim().toLowerCase() : "";
   };
 
-  let base = 0.2; // base zombie spawn
+  let base = 0.2; // Base zombie spawn
 
   if (get("Zombie villager") === "yes") base *= 0.05;
   if (get("Baby") === "yes") base *= 0.05;
@@ -15,8 +15,8 @@ function rarityCalc(q) {
   if (get("Armor") === "yes") {
     base *= 0.15;
     const pieces = Number(get("Armor pieces")) || 0;
-    const multi = [1, 1, 0.9, 0.81, 0.729][pieces] || 1;
-    base *= multi;
+    const multipliers = [1, 1, 0.9, 0.81, 0.729];
+    base *= multipliers[pieces] || 1;
 
     const ench = Number(get("Armor pieces enchanted")) || 0;
     if (ench && pieces) base *= 0.5 * (ench / pieces);
@@ -44,6 +44,7 @@ function rarityCalc(q) {
   return `Your naturally spawned zombie in max local difficulty is ${percent}% or 1 in ${oneIn}`;
 }
 
+// ✅ Nightbot requires a single return value
 if (!q.includes("Zombie villager?")) {
   "Wrong input. Input should be in this state “ !zr Zombie villager? yes/no (x) ◆ Baby? yes/no (x) ◆ Jockey? yes/no (x) ◆ Armor? yes/no (x) ◆ Armor pieces (if yes) 1/2/3/4 (x) ◆ Armor pieces enchanted (if yes) 1/2/3/4 ◆ Armor type (if yes) L/co/ch/i/g/d (x) ◆ Loot? sword/shovel/can pick up/none (x) ◆ Enchanted weapon? (if yes) yes/no ◆ Hand? (if yes) R/L (x) ◆ Halloween pumpkin? (if yes) carved/lantern (x)” Check out my creator twitch.tv/hassannm7";
 } else {
