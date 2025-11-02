@@ -1,1 +1,50 @@
-(()=>{try{var raw=(q||"").replace(/\uFEFF/g,"").toLowerCase();if(!raw)throw 1;var regexYN=/\b(?:yes|y|no|n)\b/g;function pullAll(r){var a=[];var m;while((m=r.exec(raw))!==null){a.push(m[0]);}return a;}var yns=pullAll(regexYN);var answers=[];if(yns.length>=4){for(var i=0;i<4;i++){answers.push(yns[i]==="y"?"yes":yns[i]==="n"?"no":yns[i]);}}else{var labels=["zombie villager","baby","jockey","armor"];for(var j=0;j<labels.length;j++){var re=new RegExp(labels[j]+"[^\\n\\r\\?\\:]{0,40}\\b(?:yes|y|no|n)\\b");var m=raw.match(re);if(m){var mm=m[0].match(/\b(?:yes|y|no|n)\b/)[0];answers.push(mm==="y"?"yes":mm==="n"?"no":mm);}else{var pos=raw.indexOf(labels[j]);if(pos>=0){var sub=raw.slice(pos,pos+60);var m2=sub.match(/\b(?:yes|y|no|n)\b/);if(m2)answers.push(m2[0]==="y"?"yes":m2[0]==="n"?"no":m2[0]);}}} }if(answers.length<4)throw 1;function fm(r){var m=raw.match(r);return m?m[0]:null;}var ap=fm(/\b(?:1|2|3|4)\b/)||"0";var ae=fm(/\b(?:0|1|2|3|4)\b/)||"0";var at=fm(/\b(?:l\b|co\b|ch\b|i\b|g\b|d\b)/)||"x";var loot= raw.match(/\bcan pick up\b/)? "can pick up" : (fm(/\b(?:sword|shovel|none)\b/)||"none");var we=fm(/\b(?:yes|y|no|n|enchanted)\b/);if(we){we=we==="y"?"yes":we==="n"?"no":(we==="enchanted"?"yes":(we.match(/\byes\b/)?"yes":"no"));}else we="no";var hand=fm(/\b(?:left|l|right|r)\b/)||"";if(hand==="left")hand="l";if(hand==="right")hand="r";var pk=fm(/\b(?:carved|lantern)\b/)||"x";var zv=answers[0],baby=answers[1],jockey=answers[2],armor=answers[3];if(!["yes","no"].includes(zv)||!["yes","no"].includes(baby)||!["yes","no"].includes(jockey)||!["yes","no"].includes(armor))throw 1;if(armor==="yes"){if(!["1","2","3","4"].includes(ap)||!["0","1","2","3","4"].includes(ae)||!["l","co","ch","i","g","d"].includes(at))throw 1;}else{ap="0";ae="0";at="x";}if(!["sword","shovel","can pick up","none"].includes(loot))throw 1;if(loot!=="none"&&loot!=="can pick up"){if(!["yes","no"].includes(we))throw 1;}else we="no";if(!["r","l",""].includes(hand))throw 1;if(!["carved","lantern","x"].includes(pk))throw 1;function comb(n,k){if(k<0||k>n)return 0;var c=1;for(var i=0;i<k;i++){c*=(n-i);c/=(i+1);}return c;}var p=0.1845;p*=(zv==="yes"?0.05:0.95);p*=(baby==="yes"?0.05:0.95);p*=(jockey==="yes"?0.05:0.95);p*=(armor==="yes"?0.15:0.85);var piecesProb={"1":1,"2":0.9,"3":0.81,"4":0.729};if(armor==="yes")p*=piecesProb[ap]||0;var piecesN=parseInt(ap||"0",10),enchCount=parseInt(ae||"0",10);if(armor==="yes"){var pe=comb(piecesN,enchCount)*Math.pow(0.5,piecesN);p*=pe;var atypes={l:0.236,co:0.3223,ch:0.0973,g:0.3329,i:0.011,d:0.0004};p*=atypes[at]||0;}if(loot==="sword"){p*=0.05*(1/3);if(we==="yes")p*=1.25;}else if(loot==="shovel"){p*=0.05*(2/3);if(we==="yes")p*=1.25;}else if(loot==="can pick up"){p*=0.55;}if(hand==="l"&&(loot==="sword"||loot==="shovel"||loot==="can pick up"))p*=0.11;if(pk==="carved")p*=0.225;else if(pk==="lantern")p*=0.025;if(p<=0)throw 1;var denom=Math.round(1/p);var pct=(p*100).toExponential(6).replace("E","e");return "Your naturally spawned zombie rarity in max local difficulty is 1/"+denom+" ("+pct+"%)";}catch(e){return "Wrong input. Use: !zr yes/no◆yes/no◆... or short: y◆y◆y◆y◆4◆0◆d◆sword◆n◆l◆x";}})()
+// zombie.js
+var wrongInputMsg = 'Wrong input. Input should be in this state “!zr Zombie villager? yes/no (x) ◆ Baby? yes/no (x) ◆ Jockey? yes/no (x) ◆ Armor? yes/no (x) ◆ Armor pieces (if yes) 1/2/3/4 (x) ◆ Armor pieces enchanted (if yes) 0/1/2/3/4 (x) ◆ Armor type (if yes) L/co/ch/i/g/d (x) ◆ Loot? sword/shovel/can pick up/none (x) ◆ Enchanted weapon? (if yes) yes/no (x) ◆ Hand? (if yes) R/L (x) ◆ Halloween pumpkin? (if yes) carved/lantern (x)” if no ignore the question. Check out my creator twitch.tv/hassannm7';
+
+try {
+  if (!q || !q.includes('Zombie villager?')) throw 0;
+  let data = q.split('◆').map(x=>x.trim().toLowerCase());
+
+  function yes(x){return x.includes('(yes)')};
+  function val(x){let m=x.match(/\((.*?)\)/);return m?m[1].trim():''};
+
+  let rarity = 95/515; // base spawn chance
+
+  if (yes(data[0])) rarity *= 0.05;
+  if (yes(data[1])) rarity *= 0.05;
+  if (yes(data[2])) rarity *= 0.05;
+
+  if (yes(data[3])) {
+    rarity *= 0.15;
+    let pieces = parseInt(val(data[4])) || 1;
+    let mult = [1,0.9,0.81,0.729][pieces-1] || 1;
+    rarity *= mult;
+
+    let ench = parseInt(val(data[5])) || 0;
+    rarity *= Math.pow(0.5, ench);
+
+    let armorType = val(data[6]);
+    let typeRates = {l:0.236, co:0.3223, ch:0.0973, g:0.3329, i:0.011, d:0.0004};
+    rarity *= typeRates[armorType] || 1;
+  }
+
+  let loot = val(data[7]);
+  if (loot === 'sword') rarity *= 0.05*(1/3);
+  else if (loot === 'shovel') rarity *= 0.05*(2/3);
+  else if (loot === 'can pick up') rarity *= 0.55;
+
+  if (yes(data[8])) rarity *= 1.25;
+  if (val(data[9])==='l') rarity *= 0.11;
+
+  let halloween = val(data[10]);
+  if (halloween==='carved') rarity *= 0.225;
+  else if (halloween==='lantern') rarity *= 0.025;
+
+  let chance = rarity * 100;
+  let oneIn = 1/rarity;
+
+  oneIn = oneIn.toLocaleString('en-US');
+  return `Your naturally spawned zombie rarity in max local difficulty is 1/${oneIn} or ${chance.toExponential(12)}%`;
+} catch(e) {
+  return wrongInputMsg;
+}
