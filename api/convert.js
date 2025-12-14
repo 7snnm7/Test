@@ -4,7 +4,7 @@ function formatTitle(q, t) {
     return;
   }
 
-  if (!t || t.toLowerCase().includes("offline")) {
+  if (!t || typeof t !== "string" || t.toLowerCase().includes("offline")) {
     "The channel " + q + " is currently offline.";
     return;
   }
