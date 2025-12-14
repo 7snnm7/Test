@@ -1,24 +1,19 @@
-function count(q) {
-  var url = "https://api.countapi.xyz";
-
-  // Get current value
-  var current = JSON.parse(HTTP.get(url + "/get/yourchannel/count").body).value || 0;
-
+function getTitle(q) {
   if (!q) {
-    return current.toString();
+    "Please provide a channel name.";
+    return;
   }
 
-  var n = Number(q);
-  if (isNaN(n)) {
-    return "Invalid number";
+  var url = "https://decapi.me/twitch/title/" + encodeURIComponent(q);
+
+  var title = fetch(url).text();
+
+  if (!title || title.toLowerCase().includes("offline")) {
+    "The channel " + q + " is currently offline.";
+    return;
   }
 
-  // Update counter
-  var updated = JSON.parse(
-    HTTP.get(url + "/update/yourchannel/count?amount=" + n).body
-  ).value;
-
-  return updated.toString();
+  'The current title of ' + q + ' is "' + title + '"';
 }
 
-count(q);
+getTitle(q);
